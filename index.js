@@ -128,6 +128,12 @@ async function run() {
 
     // menu related api
 
+    app.post('/menu', async(req,res)=>{
+      const recipe = req.body;
+      const result = await menuCollection.insertOne(recipe);
+      res.send(result)
+    })
+
     app.get("/menu", async (req, res) => {
       const result = await menuCollection.find().toArray();
       res.send(result);
