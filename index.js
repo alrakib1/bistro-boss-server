@@ -210,9 +210,9 @@ async function run() {
 
     app.post("/create-payment-intent", async (req, res) => {
       const { price } = req.body;
-      const amount = parseInt(price  * 100);
+      const amount = parseInt(price * 100);
       console.log(amount, "amount inside intent");
-      const paymentIntent =await stripe.paymentIntents.create({
+      const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: "usd",
         payment_method_types: ["card"],
@@ -222,23 +222,32 @@ async function run() {
       });
     });
 
-
     // payment related api
 
-    app.post('/payments', async(req,res)=>{
+    app.post("/payments", async (req, res) => {
       const payment = req.body;
       const paymentResult = await paymentCollection.insertOne(payment);
 
       // carefully delete each item form the cart
-   console.log('payment info', payment)
-   const query = {_id:{
-    $in:payment.cartId.map(id=> new ObjectId(id))
-   }}
-   const deleteResult =await cartCollection.deleteMany(query)
+      console.log("payment info", payment);
+      const query = {
+        _id: {
+          $in: payment.cartId.map((id) => new ObjectId(id)),
+        },
+      };
+      const deleteResult = await cartCollection.deleteMany(query);
 
-res.send({paymentResult,deleteResult})
+      res.send({ paymentResult, deleteResult });
+    });
 
-    })
+    app.get("/payments/:email", verifyToken, async (req, res) => {
+      const query = { email: req.params.email };
+      if (req.params.email !== req.decoded.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
